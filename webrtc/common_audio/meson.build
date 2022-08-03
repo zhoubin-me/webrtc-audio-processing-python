@@ -97,7 +97,7 @@ if have_mips
     'signal_processing/min_max_operations_mips.c',
     'signal_processing/resample_by_2_mips.c',
     'signal_processing/vector_scaling_operations_mips.c',
-    'third_party/ooura/fft_size_128/ooura_fft_mips.c',
+    'third_party/ooura/fft_size_128/ooura_fft_mips.cc',
     'third_party/spl_sqrt_floor/spl_sqrt_floor_mips.c',
   ]
 endif
