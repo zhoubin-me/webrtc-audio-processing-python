@@ -134,7 +134,6 @@ if cc.compiles('''#ifndef __aarch64__
 endif
 if ['mips', 'mips64'].contains(host_machine.cpu_family())
   have_mips = true
-  arch_cflags += ['WEBRTC_ARCH_MIPS_FAMILY']
 endif
 if host_machine.cpu_family() == 'mips64'
   have_mips64 = true
