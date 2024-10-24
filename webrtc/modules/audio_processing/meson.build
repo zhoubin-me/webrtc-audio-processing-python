@@ -60,7 +60,6 @@ webrtc_audio_processing_sources = [
   'aec3/suppression_gain.cc',
   'aec3/transparent_mode.cc',
   'aecm/aecm_core.cc',
-  'aecm/aecm_core_c.cc',
   'aecm/echo_control_mobile.cc',
   'agc/agc.cc',
   'agc/agc_manager_direct.cc',
@@ -174,6 +173,10 @@ endif
 if have_mips
   webrtc_audio_processing_sources += [
     'aecm/aecm_core_mips.cc',
+  ]
+else
+  webrtc_audio_processing_sources += [
+    'aecm/aecm_core_c.cc',
   ]
 endif
 
