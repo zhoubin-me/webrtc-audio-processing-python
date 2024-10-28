@@ -167,10 +167,11 @@ if neon_opt != 'no' and not have_neon
       arch_cflags += ['-mfpu=neon', '-DWEBRTC_HAS_NEON']
       have_neon = true
     endif
-  else
-    arch_cflags += ['-DWEBRTC_DETECT_NEON', '-mfpu=neon']
-    have_neon = true
   endif
+endif
+if neon_opt == 'runtime'
+  warning('webrtc cannot check NEON support at runtime, will build without NEON')
+  have_neon = false
 endif
 
 common_cflags = [
