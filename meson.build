@@ -111,6 +111,7 @@ endif
 arch_cflags = []
 have_arm = false
 have_armv7 = false
+have_arm64 = false
 have_neon = false
 have_mips = false
 have_mips64 = false
@@ -134,8 +135,9 @@ endif
 if cc.compiles('''#ifndef __aarch64__
 #error no aarch64 arch
 #endif''')
+  have_arm64 = true
   have_neon = true
-  arch_cflags += ['-DWEBRTC_ARCH_ARM64', '-DWEBRTC_HAS_NEON']
+  arch_cflags += ['-DWEBRTC_ARCH_ARM64']
 endif
 if ['mips', 'mips64'].contains(host_machine.cpu_family())
   have_mips = true
@@ -164,7 +166,6 @@ neon_opt = get_option('neon')
 if neon_opt != 'no' and not have_neon
   if neon_opt != 'runtime'
     if cc.compiles('#include <arm_neon.h>', args : '-mfpu=neon')
-      arch_cflags += ['-mfpu=neon', '-DWEBRTC_HAS_NEON']
       have_neon = true
     endif
   endif
@@ -172,6 +173,12 @@ endif
 if neon_opt == 'runtime'
   warning('webrtc cannot check NEON support at runtime, will build without NEON')
   have_neon = false
+endif
+if have_neon
+  arch_cflags += ['-DWEBRTC_HAS_NEON']
+  if not have_arm64
+    arch_cflags += ['-mfpu=neon']
+  endif
 endif
 
 common_cflags = [
