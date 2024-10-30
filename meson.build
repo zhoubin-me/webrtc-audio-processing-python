@@ -175,6 +175,9 @@ if neon_opt == 'auto'
     neon_opt = 'no'
   endif
 endif
+if neon_opt != 'no' and not have_neon
+  error('Compiler or architecture does not support NEON')
+endif
 if neon_opt == 'runtime'
   warning('webrtc cannot check NEON support at runtime, will build without NEON')
   have_neon = false
