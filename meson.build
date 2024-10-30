@@ -166,6 +166,15 @@ if ['x86', 'x86_64'].contains(host_machine.cpu_family())
 endif
 
 neon_opt = get_option('neon')
+if neon_opt == 'auto'
+  if have_arm64
+    neon_opt = 'yes'
+  elif have_neon
+    neon_opt = 'runtime'
+  else
+    neon_opt = 'no'
+  endif
+endif
 if neon_opt == 'runtime'
   warning('webrtc cannot check NEON support at runtime, will build without NEON')
   have_neon = false

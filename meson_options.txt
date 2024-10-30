@@ -2,7 +2,7 @@ option('gnustl', type: 'feature',
        value: 'auto',
        description: 'Use gnustl for a c++ library implementation (only used on Android)')
 option('neon', type: 'combo',
-       choices: ['no', 'yes', 'auto', 'runtime'],
+       choices: ['auto', 'yes', 'runtime', 'no'],
        description: 'Enable NEON optimisations')
 option('inline-sse', type: 'boolean',
        value: true,
