@@ -4,6 +4,10 @@ pffft_sources = [
 
 pffft_cflags = [ '-D_GNU_SOURCE' ]
 
+if neon_opt == 'runtime'
+  warning('pffft cannot check NEON support at runtime, will build without NEON')
+endif
+
 if not have_inline_sse or (have_arm and neon_opt != 'yes') or (have_mips and host_machine.endian() == 'little') or have_mips64
   pffft_cflags += [ '-DPFFFT_SIMD_DISABLE' ]
 endif
