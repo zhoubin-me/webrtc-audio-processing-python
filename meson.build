@@ -173,6 +173,8 @@ endif
 if neon_opt == 'runtime'
   warning('webrtc cannot check NEON support at runtime, will build without NEON')
   have_neon = false
+elif neon_opt == 'no'
+  have_neon = false
 endif
 if have_neon
   arch_cflags += ['-DWEBRTC_HAS_NEON']
