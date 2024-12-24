@@ -218,3 +218,5 @@ audio_coding_dep = declare_dependency(
 )
 
 meson.override_dependency(ac_project_name, audio_coding_dep)
+
+subdir('examples')
