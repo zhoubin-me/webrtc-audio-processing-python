@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+ *  Copyright 2017 The WebRTC project authors. All Rights Reserved.
  *
  *  Use of this source code is governed by a BSD-style license
  *  that can be found in the LICENSE file in the root of the source
@@ -8,16 +8,15 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-#include "modules/audio_processing/include/config.h"
+#include "api/audio/audio_processing_statistics.h"
 
 namespace webrtc {
 
-Config::Config() {}
+AudioProcessingStats::AudioProcessingStats() = default;
 
-Config::~Config() {
-  for (OptionMap::iterator it = options_.begin(); it != options_.end(); ++it) {
-    delete it->second;
-  }
-}
+AudioProcessingStats::AudioProcessingStats(const AudioProcessingStats& other) =
+    default;
+
+AudioProcessingStats::~AudioProcessingStats() = default;
 
 }  // namespace webrtc

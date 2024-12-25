@@ -21,10 +21,6 @@ apm_major_version = major_version
 apm_minor_version = minor_version
 apm_project_name = 'webrtc-audio-processing-' + apm_major_version
 
-ac_major_version = major_version
-ac_minor_version = minor_version
-ac_project_name = 'webrtc-audio-coding-' + ac_major_version
-
 include_subdir = apm_project_name
 
 cc = meson.get_compiler('c')
@@ -202,21 +198,5 @@ audio_processing_dep = declare_dependency(
 )
 
 meson.override_dependency(apm_project_name, audio_processing_dep)
-
-pkgconfig.generate(
-  libwebrtc_audio_coding,
-  description: 'WebRTC Audio Coding library',
-  subdirs: include_subdir,
-  extra_cflags: [
-    '-DWEBRTC_LIBRARY_IMPL',
-  ] + platform_cflags,
-)
-
-audio_coding_dep = declare_dependency(
-  link_with: libwebrtc_audio_coding,
-  include_directories: [webrtc_inc]
-)
-
-meson.override_dependency(ac_project_name, audio_coding_dep)
 
 subdir('examples')

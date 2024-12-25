@@ -1,5 +1,7 @@
 api_sources = [
   'audio/audio_frame.cc',
+  'audio/audio_processing.cc',
+  'audio/audio_processing_statistics.cc',
   'audio/channel_layout.cc',
   'audio/echo_canceller3_config.cc',
   'audio_codecs/audio_decoder.cc',
