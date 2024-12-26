@@ -55,8 +55,6 @@ common_audio_sources = [
   'vad/vad_gmm.c',
   'vad/vad_sp.c',
   'vad/webrtc_vad.c',
-  'wav_file.cc',
-  'wav_header.cc',
   'window_generator.cc',
 ]
 
