@@ -29,8 +29,8 @@ variables:
   # CI runs, for example when adding new packages to FDO_DISTRIBUTION_PACKAGES.
   # The tag is an arbitrary string that identifies the exact container
   # contents.
-  BASE_TAG: '2024-12-24.1'
-  FDO_DISTRIBUTION_VERSION: '24.04'
+  BASE_TAG: '2024-12-26.0'
+  FDO_DISTRIBUTION_VERSION: '41'
   FDO_UPSTREAM_REPO: 'pulseaudio/webrtc-audio-processing'
 
 include:
@@ -40,10 +40,10 @@ include:
   # failures, this might be one cause.
   - project: 'freedesktop/ci-templates'
     ref: 'master'
-    file: '/templates/ubuntu.yml'
+    file: '/templates/fedora.yml'
 
 # Common container build template
-.ubuntu-container-build:
+.fedora-container-build:
   variables:
     GIT_STRATEGY: none # no need to pull the whole tree for rebuilding the image
 
@@ -56,19 +56,19 @@ include:
       gcc
       git-core
       cmake
-      libabsl-dev
+      abseil-cpp-devel
       meson
       ninja-build
       pkg-config
       python3-setuptools
 
 # Used to extend both container and build jobs
-.ubuntu-x86_64:
+.fedora-x86_64:
   variables:
     FDO_DISTRIBUTION_TAG: "x86_64-$BASE_TAG"
 
 # Used to extend both container and build jobs
-.ubuntu-aarch64:
+.fedora-aarch64:
   tags:
     - aarch64
   variables:
@@ -76,23 +76,23 @@ include:
 
 build-container-x86_64:
   extends:
-    - .fdo.container-build@ubuntu@x86_64
-    - .ubuntu-container-build
-    - .ubuntu-x86_64
+    - .fdo.container-build@fedora@x86_64
+    - .fedora-container-build
+    - .fedora-x86_64
   stage: container
 
 build-container-aarch64:
   extends:
-    - .fdo.container-build@ubuntu@aarch64
-    - .ubuntu-container-build
-    - .ubuntu-aarch64
+    - .fdo.container-build@fedora@aarch64
+    - .fedora-container-build
+    - .fedora-aarch64
   stage: container
 
 # Common build template
 .build-distro-absl:
   stage: build
   extends:
-    - .fdo.distribution-image@ubuntu
+    - .fdo.distribution-image@fedora
   script:
     - meson setup --wrap-mode=nofallback --prefix=/usr --libdir=lib builddir
     - ninja -C builddir
@@ -108,7 +108,7 @@ build-container-aarch64:
 .build-vendored-absl:
   stage: build
   extends:
-    - .fdo.distribution-image@ubuntu
+    - .fdo.distribution-image@fedora
   script:
     - meson setup --force-fallback-for=abseil-cpp --prefix=/usr --libdir=lib builddir
     - ninja -C builddir
@@ -124,22 +124,22 @@ build-container-aarch64:
 build-distro-absl-x86_64:
   extends:
     - .build-distro-absl
-    - .ubuntu-x86_64
+    - .fedora-x86_64
 
 build-vendored-absl-x86_64:
   extends:
     - .build-vendored-absl
-    - .ubuntu-x86_64
+    - .fedora-x86_64
 
 build-distro-absl-aarch64:
   extends:
     - .build-distro-absl
-    - .ubuntu-aarch64
+    - .fedora-aarch64
 
 build-vendored-absl-aarch64:
   extends:
     - .build-vendored-absl
-    - .ubuntu-aarch64
+    - .fedora-aarch64
 
 # Update from:
 # https://gitlab.freedesktop.org/gstreamer/gstreamer/-/blob/main/.gitlab-ci.yml
