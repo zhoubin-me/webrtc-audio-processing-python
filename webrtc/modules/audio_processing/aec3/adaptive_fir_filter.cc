@@ -16,7 +16,7 @@
 #if defined(WEBRTC_HAS_NEON)
 #include <arm_neon.h>
 #endif
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 #include <math.h>
@@ -88,7 +88,7 @@ void ComputeFrequencyResponse_Neon(
 }
 #endif
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 // Computes and stores the frequency response of the filter.
 void ComputeFrequencyResponse_Sse2(
     size_t num_partitions,
@@ -212,7 +212,7 @@ void AdaptPartitions_Neon(const RenderBuffer& render_buffer,
 }
 #endif
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 // Adapts the filter partitions. (SSE2 variant)
 void AdaptPartitions_Sse2(const RenderBuffer& render_buffer,
                           const FftData& G,
@@ -377,7 +377,7 @@ void ApplyFilter_Neon(const RenderBuffer& render_buffer,
 }
 #endif
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 // Produces the filter output (SSE2 variant).
 void ApplyFilter_Sse2(const RenderBuffer& render_buffer,
                       size_t num_partitions,
@@ -557,9 +557,11 @@ void AdaptiveFirFilter::Filter(const RenderBuffer& render_buffer,
   RTC_DCHECK(S);
   switch (optimization_) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
     case Aec3Optimization::kSse2:
       aec3::ApplyFilter_Sse2(render_buffer, current_size_partitions_, H_, S);
       break;
+#endif
     case Aec3Optimization::kAvx2:
       aec3::ApplyFilter_Avx2(render_buffer, current_size_partitions_, H_, S);
       break;
@@ -601,9 +603,11 @@ void AdaptiveFirFilter::ComputeFrequencyResponse(
 
   switch (optimization_) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
     case Aec3Optimization::kSse2:
       aec3::ComputeFrequencyResponse_Sse2(current_size_partitions_, H_, H2);
       break;
+#endif
     case Aec3Optimization::kAvx2:
       aec3::ComputeFrequencyResponse_Avx2(current_size_partitions_, H_, H2);
       break;
@@ -626,10 +630,12 @@ void AdaptiveFirFilter::AdaptAndUpdateSize(const RenderBuffer& render_buffer,
   // Adapt the filter.
   switch (optimization_) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
     case Aec3Optimization::kSse2:
       aec3::AdaptPartitions_Sse2(render_buffer, G, current_size_partitions_,
                                  &H_);
       break;
+#endif
     case Aec3Optimization::kAvx2:
       aec3::AdaptPartitions_Avx2(render_buffer, G, current_size_partitions_,
                                  &H_);

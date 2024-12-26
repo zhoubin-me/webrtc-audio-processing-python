@@ -16,7 +16,7 @@
 #if defined(WEBRTC_HAS_NEON)
 #include <arm_neon.h>
 #endif
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 
@@ -54,7 +54,7 @@ void ErlComputer_NEON(
 }
 #endif
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 // Computes and stores the echo return loss estimate of the filter, which is the
 // sum of the partition frequency responses.
 void ErlComputer_SSE2(
@@ -82,9 +82,11 @@ void ComputeErl(const Aec3Optimization& optimization,
   // Update the frequency response and echo return loss for the filter.
   switch (optimization) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
     case Aec3Optimization::kSse2:
       aec3::ErlComputer_SSE2(H2, erl);
       break;
+#endif
     case Aec3Optimization::kAvx2:
       aec3::ErlComputer_AVX2(H2, erl);
       break;

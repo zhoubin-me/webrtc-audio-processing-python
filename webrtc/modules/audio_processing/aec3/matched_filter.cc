@@ -15,7 +15,7 @@
 #if defined(WEBRTC_HAS_NEON)
 #include <arm_neon.h>
 #endif
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 #include <algorithm>
@@ -286,7 +286,7 @@ void MatchedFilterCore_NEON(size_t x_start_index,
 
 #endif
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 
 void MatchedFilterCore_AccumulatedError_SSE2(
     size_t x_start_index,
@@ -695,12 +695,14 @@ void MatchedFilter::Update(const DownsampledRenderBuffer& render_buffer,
 
     switch (optimization_) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
       case Aec3Optimization::kSse2:
         aec3::MatchedFilterCore_SSE2(
             x_start_index, x2_sum_threshold, smoothing, render_buffer.buffer, y,
             filters_[n], &filters_updated, &error_sum, compute_pre_echo,
             instantaneous_accumulated_error_, scratch_memory_);
         break;
+#endif
       case Aec3Optimization::kAvx2:
         aec3::MatchedFilterCore_AVX2(
             x_start_index, x2_sum_threshold, smoothing, render_buffer.buffer, y,

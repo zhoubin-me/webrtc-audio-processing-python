@@ -110,6 +110,7 @@ have_neon = false
 have_mips = false
 have_mips64 = false
 have_x86 = false
+have_inline_sse = false
 have_avx2 = false
 if host_machine.cpu_family() == 'arm'
   if cc.compiles('''#ifndef __ARM_ARCH_ISA_ARM
@@ -140,10 +141,19 @@ if host_machine.cpu_family() == 'mips64'
 endif
 if ['x86', 'x86_64'].contains(host_machine.cpu_family())
   have_x86 = true
-  # This is unconditionally enabled for now, actual usage is determined by
-  # runtime CPU detection, so we're just assuming the compiler supports avx2
+  # AVX2 support is unconditionally available, since all the code (compiled
+  # with -mavx2) is in separate files from runtime detection (which should not
+  # be compiled with SIMD flags for cases where the CPU does not support it).
+  # Unfortunately, a bunch of SSE code is inline with the runtime detection,
+  # and we can't support that on systems that don't support SSE.
   have_avx2 = true
   arch_cflags += ['-DWEBRTC_ENABLE_AVX2']
+  if get_option('inline-sse')
+    have_inline_sse = true
+  else
+    have_inline_sse = false
+    arch_cflags += ['-DWAP_DISABLE_INLINE_SSE']
+  endif
 endif
 
 neon_opt = get_option('neon')

@@ -14,7 +14,7 @@
 // Defines WEBRTC_ARCH_X86_FAMILY, used below.
 #include "rtc_base/system/arch.h"
 
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 #include <algorithm>
@@ -49,6 +49,7 @@ struct FftData {
     RTC_DCHECK_EQ(kFftLengthBy2Plus1, power_spectrum.size());
     switch (optimization) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
       case Aec3Optimization::kSse2: {
         constexpr int kNumFourBinBands = kFftLengthBy2 / 4;
         constexpr int kLimit = kNumFourBinBands * 4;
@@ -63,6 +64,7 @@ struct FftData {
         power_spectrum[kFftLengthBy2] = re[kFftLengthBy2] * re[kFftLengthBy2] +
                                         im[kFftLengthBy2] * im[kFftLengthBy2];
       } break;
+#endif
       case Aec3Optimization::kAvx2:
         SpectrumAVX2(power_spectrum);
         break;

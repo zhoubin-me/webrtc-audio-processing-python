@@ -17,7 +17,7 @@
 #if defined(WEBRTC_HAS_NEON)
 #include <arm_neon.h>
 #endif
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 
@@ -47,6 +47,7 @@ class VectorMath {
     if (cpu_features_.avx2) {
       return DotProductAvx2(x, y);
     } else if (cpu_features_.sse2) {
+#if !defined(WAP_DISABLE_INLINE_SSE)
       __m128 accumulator = _mm_setzero_ps();
       constexpr int kBlockSizeLog2 = 2;
       constexpr int kBlockSize = 1 << kBlockSizeLog2;
@@ -72,6 +73,7 @@ class VectorMath {
         dot_product += x[i] * y[i];
       }
       return dot_product;
+#endif
     }
 #elif defined(WEBRTC_HAS_NEON) && defined(WEBRTC_ARCH_ARM64)
     if (cpu_features_.neon) {

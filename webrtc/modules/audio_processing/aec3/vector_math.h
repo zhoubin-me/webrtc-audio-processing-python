@@ -17,7 +17,7 @@
 #if defined(WEBRTC_HAS_NEON)
 #include <arm_neon.h>
 #endif
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
 #include <emmintrin.h>
 #endif
 #include <math.h>
@@ -43,7 +43,7 @@ class VectorMath {
   void SqrtAVX2(rtc::ArrayView<float> x);
   void Sqrt(rtc::ArrayView<float> x) {
     switch (optimization_) {
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
       case Aec3Optimization::kSse2: {
         const int x_size = static_cast<int>(x.size());
         const int vector_limit = x_size >> 2;
@@ -123,7 +123,7 @@ class VectorMath {
     RTC_DCHECK_EQ(z.size(), x.size());
     RTC_DCHECK_EQ(z.size(), y.size());
     switch (optimization_) {
-#if defined(WEBRTC_ARCH_X86_FAMILY)
+#if defined(WEBRTC_ARCH_X86_FAMILY) && !defined(WAP_DISABLE_INLINE_SSE)
       case Aec3Optimization::kSse2: {
         const int x_size = static_cast<int>(x.size());
         const int vector_limit = x_size >> 2;
@@ -174,6 +174,7 @@ class VectorMath {
     RTC_DCHECK_EQ(z.size(), x.size());
     switch (optimization_) {
 #if defined(WEBRTC_ARCH_X86_FAMILY)
+#if !defined(WAP_DISABLE_INLINE_SSE)
       case Aec3Optimization::kSse2: {
         const int x_size = static_cast<int>(x.size());
         const int vector_limit = x_size >> 2;
@@ -190,6 +191,7 @@ class VectorMath {
           z[j] += x[j];
         }
       } break;
+#endif
       case Aec3Optimization::kAvx2:
         AccumulateAVX2(x, z);
         break;
