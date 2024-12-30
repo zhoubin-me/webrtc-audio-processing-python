@@ -180,7 +180,7 @@ else
   ]
 endif
 
-if neon_opt == 'yes'
+if neon_opt.enabled()
   webrtc_audio_processing_sources += [
     'aecm/aecm_core_neon.cc',
   ]

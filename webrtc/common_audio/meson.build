@@ -112,7 +112,7 @@ if have_armv7
   ]
 endif
 
-if neon_opt == 'yes'
+if neon_opt.enabled()
   common_audio_sources += [
     'fir_filter_neon.cc',
     'resampler/sinc_resampler_neon.cc',
