@@ -83,13 +83,13 @@ elif host_system == 'android'
   os_deps += [dependency('gnustl', required : get_option('gnustl'))]
   have_posix = true
 elif host_system == 'linux'
-  os_cflags += ['-DWEBRTC_LINUX', '-DWEBRTC_THREAD_RR']
+  os_cflags += ['-DWEBRTC_LINUX']
   os_deps += [cc.find_library('rt', required : false)]
   os_deps += [dependency('threads')]
   have_posix = true
 elif (host_system == 'dragonfly' or host_system == 'freebsd' or
       host_system == 'netbsd' or host_system == 'openbsd')
-  os_cflags += ['-DWEBRTC_BSD', '-DWEBRTC_THREAD_RR']
+  os_cflags += ['-DWEBRTC_BSD']
   os_deps += [dependency('threads')]
   have_posix = true
 elif host_system == 'windows'
