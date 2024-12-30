@@ -4,7 +4,7 @@ pffft_sources = [
 
 pffft_cflags = [ '-D_GNU_SOURCE' ]
 
-if not have_inline_sse or (have_arm and not neon_opt.enabled()) or (have_mips and host_machine.endian() == 'little') or have_mips64
+if (have_x86 and not have_inline_sse) or (have_arm and not neon_opt.enabled()) or (have_mips and host_machine.endian() == 'little') or have_mips64
   pffft_cflags += [ '-DPFFFT_SIMD_DISABLE' ]
 endif
 
