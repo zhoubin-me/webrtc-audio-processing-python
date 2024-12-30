@@ -15,7 +15,6 @@ base_sources = [
   'string_utils.cc',
   'strings/string_builder.cc',
   'synchronization/sequence_checker_internal.cc',
-  'synchronization/yield.cc',
   'synchronization/yield_policy.cc',
   'system/file_wrapper.cc',
   'system_time.cc',

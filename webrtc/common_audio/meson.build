@@ -4,8 +4,6 @@ common_audio_sources = [
   'channel_buffer.cc',
   'fir_filter_c.cc',
   'fir_filter_factory.cc',
-  'real_fourier.cc',
-  'real_fourier_ooura.cc',
   'resampler/push_resampler.cc',
   'resampler/push_sinc_resampler.cc',
   'resampler/resampler.cc',
@@ -55,7 +53,6 @@ common_audio_sources = [
   'vad/vad_gmm.c',
   'vad/vad_sp.c',
   'vad/webrtc_vad.c',
-  'window_generator.cc',
 ]
 
 arch_libs = []
