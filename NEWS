@@ -1,3 +1,46 @@
+Release 1.3
+-----------
+
+Fix for generate pkg-config file.
+
+
+Release 1.2
+-----------
+
+Improvements for building with abseil-cpp as a subproject, and pkg-config
+improvements for abseil dependency detection.
+
+
+Release 1.1
+-----------
+
+Build fixes for various platforms.
+
+
+Release 1.0
+-----------
+
+This is an API breaking release (as a reminder, the AudioProcessing module does
+not provide a stable public API, so we expose whatever API exists in the
+upstream project).
+
+In order to make package management easier with these inevitable breakages, the
+package is now suffixed with a version (currently it is
+webrtc-audio-processing-1). When the next API break happens, we will bump the
+major version, allowing incompatible versions to coexist. This also means that
+the previous version can also coexist with this one. Non-breaking changes will
+see a minor version update only.
+
+Changes:
+  * The code base is now updated to correspond to the version shipping with the
+    Chromium 88.0.4290.1 tag
+  * There are a very large number changes to the underlying AEC implementation
+    since the last update was a while ago. Most visibly the use of the AEC3
+    canceller by default, the deletion of the beamformer code
+  * The autotools build system is replaced by meson
+  * The pkg-config name is changed as described above
+
+
 Release 0.3
 -----------
 
