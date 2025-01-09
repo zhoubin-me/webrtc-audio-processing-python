@@ -18,9 +18,15 @@ api_sources = [
 
 api_headers = [
   ['', 'array_view.h'],
+  ['', 'location.h'],
+  ['', 'ref_count.h'],
   ['', 'scoped_refptr.h'],
+  ['audio', 'audio_processing.h'],
+  ['audio', 'audio_processing_statistics.h'],
   ['audio', 'echo_canceller3_config.h'],
   ['audio', 'echo_control.h'],
+  ['task_queue', 'task_queue_base.h'],
+  ['units', 'time_delta.h'],
 ]
 
 foreach h : api_headers

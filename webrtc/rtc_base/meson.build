@@ -26,11 +26,16 @@ base_headers = [
   [ '', 'arraysize.h' ],
   [ '', 'checks.h' ],
   [ '', 'ref_count.h' ],
+  [ '', 'thread_annotations.h' ],
   [ '', 'type_traits.h' ],
+  [ 'numerics', 'divide_round.h' ],
   [ 'numerics', 'safe_compare.h' ],
+  [ 'numerics', 'safe_conversions.h' ],
+  [ 'numerics', 'safe_conversions_impl.h' ],
   [ 'system', 'file_wrapper.h' ],
   [ 'system', 'inline.h' ],
   [ 'system', 'rtc_export.h' ],
+  [ 'units', 'unit_base.h' ],
 ]
 
 foreach h : base_headers
