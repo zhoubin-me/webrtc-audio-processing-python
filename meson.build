@@ -52,6 +52,7 @@ absl_dep = [
   dependency('absl_base', default_options: ['cpp_std=c++17'], version: '>=20240722'),
   dependency('absl_flags'),
   dependency('absl_strings'),
+  dependency('absl_numeric'),
   dependency('absl_synchronization'),
   dependency('absl_bad_optional_access'),
 ]
@@ -62,6 +63,7 @@ if absl_dep[0].type_name() == 'internal'
     absl_subproj.get_variable('absl_base_headers'),
     absl_subproj.get_variable('absl_flags_headers'),
     absl_subproj.get_variable('absl_strings_headers'),
+    absl_subproj.get_variable('absl_numeric_headers'),
     absl_subproj.get_variable('absl_synchronization_headers'),
     absl_subproj.get_variable('absl_types_headers'),
   ]
