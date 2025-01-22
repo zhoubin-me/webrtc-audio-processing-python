@@ -1,3 +1,10 @@
+Release 2.1
+-----------
+
+Build-system fixups to install more headers, add a missing absl dependency, and
+forward port some missing patches to fix Windows builds.
+
+
 Release 2.0
 -----------
 
