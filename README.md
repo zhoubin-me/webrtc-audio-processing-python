@@ -1,43 +1,139 @@
-# About
+# WebRTC Audio Processing Python Bindings
 
-This is meant to be a more Linux packaging friendly copy of the AudioProcessing
-module from the [ WebRTC ](https://webrtc.googlesource.com/src) project. The
-ideal case is that we make no changes to the code to make tracking upstream
-code easy.
+Python bindings for the [WebRTC Audio Processing](https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing) library, providing real-time audio processing capabilities including echo cancellation, noise suppression, and automatic gain control.
 
-This package currently only includes the AudioProcessing bits, but I am very
-open to collaborating with other projects that wish to distribute other bits of
-the code and hopefully eventually have a single point of packaging all the
-WebRTC code to help people reuse the code and avoid keeping private copies in
-several different projects.
+## Features
 
-# Building
+- **Echo Cancellation**: Removes acoustic echo from audio streams
+- **Noise Suppression**: Reduces background noise in captured audio  
+- **Automatic Gain Control (AGC)**: Maintains consistent audio levels
+- **High-pass Filtering**: Removes low-frequency noise
+- **Voice Activity Detection**: Detects speech presence
 
-This project uses the [Meson build system](https://mesonbuild.com/). The
-quickest way to build is:
+## Installation
 
-```sh
-# Initialise into the build/ directory, for a prefixed install into the
-# install/ directory
+### Prerequisites
+
+First, you need to build and install the WebRTC Audio Processing C++ library:
+
+```bash
+# Build the C++ library
+mkdir install
 meson . build -Dprefix=$PWD/install
-
-# Run the actual build
 ninja -C build
-
-# Install locally
 ninja -C build install
 
-# The libraries, headers, and pkg-config files are now in the install/
-# directory
+# Add to pkg-config path (if needed)
+export PKG_CONFIG_PATH=$PWD/install/lib/pkgconfig:$PKG_CONFIG_PATH
 ```
 
-# Feedback
+### Install Python Package
 
-Patches, suggestions welcome. You can file an issue on our Gitlab
-[repository](https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/).
+```bash
+# Install from source
+cd python
 
-# Notes
+pip install .
 
-1. It might be nice to try LTO on the library. We build a lot of code as part
-   of the main AudioProcessing module deps, and it's possible that this could
-   provide significant space savings.
+# Or for development
+pip install -e .
+```
+
+## Quick Start
+
+```python
+import webrtc_audio_processing as webrtc_apm
+import numpy as np
+
+# Create and configure audio processing
+builder = webrtc_apm.AudioProcessingBuilder()
+config = webrtc_apm.Config()
+
+# Enable echo cancellation
+config.echo_canceller.enabled = True
+config.echo_canceller.mobile_mode = False
+
+# Enable automatic gain control
+config.gain_controller1.enabled = True
+config.gain_controller1.mode = webrtc_apm.GainController1Mode.ADAPTIVE_ANALOG
+
+# Enable noise suppression
+config.noise_suppression.enabled = True
+config.noise_suppression.level = webrtc_apm.NoiseSuppressionLevel.MODERATE
+
+# Enable high-pass filter
+config.high_pass_filter.enabled = True
+
+# Apply configuration and create processor
+builder.SetConfig(config)
+apm = builder.Create()
+
+# Configure audio streams (32kHz, mono)
+stream_config = webrtc_apm.StreamConfig(32000, 1)
+
+# Process audio frames
+# render_frame: far-end audio (what the user hears)
+# capture_frame: near-end audio (microphone input)
+
+render_frame = np.array([...], dtype=np.int16)  # Your render audio data
+capture_frame = np.array([...], dtype=np.int16)  # Your capture audio data
+
+# Process reverse stream (render/playback audio)
+apm.ProcessReverseStream(render_frame, stream_config, stream_config, render_frame)
+
+# Process forward stream (capture/microphone audio) 
+apm.ProcessStream(capture_frame, stream_config, stream_config, capture_frame)
+
+# The capture_frame now contains the processed audio
+```
+
+## Examples
+
+See the `examples/` directory for complete working examples:
+
+- `offline_processing.py` - Process audio files offline (equivalent to C++ run-offline example)
+- `realtime_processing.py` - Real-time audio processing with microphone/speakers
+
+## API Reference
+
+### AudioProcessing
+
+Main audio processing class:
+
+- `Initialize()` - Initialize the audio processor
+- `ApplyConfig(config)` - Apply configuration settings
+- `ProcessStream(data, input_config, output_config, output)` - Process capture stream
+- `ProcessReverseStream(data, input_config, output_config, output)` - Process render stream
+- `set_stream_delay_ms(delay)` - Set stream delay in milliseconds
+
+### Config
+
+Configuration structure with the following components:
+
+- `echo_canceller` - Echo cancellation settings
+- `noise_suppression` - Noise suppression settings  
+- `gain_controller1` - AGC1 settings
+- `gain_controller2` - AGC2 settings
+- `high_pass_filter` - High-pass filter settings
+
+### StreamConfig
+
+Audio stream configuration:
+
+```python
+config = webrtc_apm.StreamConfig(sample_rate_hz, num_channels)
+```
+
+## Requirements
+
+- Python 3.8+
+- NumPy
+- WebRTC Audio Processing C++ library (built separately)
+
+## License
+
+BSD 3-Clause License (same as WebRTC Audio Processing library)
+
+## Contributing
+
+Contributions are welcome! Please see the main WebRTC Audio Processing project for contribution guidelines.
