@@ -1,0 +1,17 @@
+# Python build artifacts
+*.so
+*.egg-info/
+__pycache__/
+build/
+dist/
+.venv/
+.python-version
+
+# Generated test files
+*.raw
+
+# uv files
+uv.lock
+
+# OS files
+.DS_Store
