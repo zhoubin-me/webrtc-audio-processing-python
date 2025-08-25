@@ -1,0 +1,54 @@
+[build-system]
+requires = ["pybind11[global]>=2.6.0", "setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webrtc-audio-processing"
+version = "2.1.0"
+description = "Python bindings for WebRTC Audio Processing library"
+readme = "README.md"
+license = "BSD-3-Clause"
+authors = [
+    {name = "WebRTC Audio Processing Python", email = "info@example.com"},
+]
+maintainers = [
+    {name = "WebRTC Audio Processing Python", email = "info@example.com"},
+]
+keywords = ["webrtc", "audio", "processing", "echo", "cancellation", "noise", "suppression", "aec", "agc"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: C++",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Software Development :: Libraries",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "pybind11>=3.0.1",
+    "setuptools>=75.3.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "numpy"]
+dev = ["pytest", "numpy", "black", "flake8"]
+
+[project.urls]
+Homepage = "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing"
+Documentation = "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing"
+Repository = "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing"
+"Bug Reports" = "https://gitlab.freedesktop.org/pulseaudio/webrtc-audio-processing/-/issues"
+
+[tool.pybind11.cmake]
+args = [
+    "-DCMAKE_BUILD_TYPE=Release",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
