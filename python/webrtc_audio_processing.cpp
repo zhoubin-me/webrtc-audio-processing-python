@@ -4,7 +4,51 @@
 #include <api/audio/audio_processing.h>
 #include <api/scoped_refptr.h>
 
+// Include VAD header directly from source tree
+extern "C" {
+    #include "../webrtc/common_audio/vad/include/webrtc_vad.h"
+}
+
 namespace py = pybind11;
+
+// C++ wrapper class for WebRTC VAD
+class WebRTCVAD {
+private:
+    VadInst* vad_;
+
+public:
+    WebRTCVAD() : vad_(nullptr) {
+        vad_ = WebRtcVad_Create();
+        if (!vad_ || WebRtcVad_Init(vad_) != 0) {
+            if (vad_) WebRtcVad_Free(vad_);
+            throw std::runtime_error("Failed to create and initialize VAD instance");
+        }
+    }
+
+    ~WebRTCVAD() {
+        if (vad_) {
+            WebRtcVad_Free(vad_);
+        }
+    }
+
+    bool set_mode(int mode) {
+        return WebRtcVad_set_mode(vad_, mode) == 0;
+    }
+
+    int is_speech(py::array_t<int16_t> audio_frame, int sample_rate = 16000) {
+        auto buf = audio_frame.request();
+        if (buf.ndim != 1) {
+            throw std::runtime_error("Input array must be 1-dimensional");
+        }
+        return WebRtcVad_Process(vad_, sample_rate, 
+                               static_cast<const int16_t*>(buf.ptr), 
+                               buf.shape[0]);
+    }
+
+    static bool is_valid_config(int sample_rate, size_t frame_length) {
+        return WebRtcVad_ValidRateAndFrameLength(sample_rate, frame_length) == 0;
+    }
+};
 
 PYBIND11_MODULE(webrtc_audio_processing, m) {
     m.doc() = "Python bindings for WebRTC Audio Processing";
@@ -155,4 +199,17 @@ PYBIND11_MODULE(webrtc_audio_processing, m) {
 
     // Utility functions
     m.def("GetFrameSize", &webrtc::AudioProcessing::GetFrameSize, "Get frame size for given sample rate");
+
+    // WebRTC VAD (Voice Activity Detection) wrapper class
+    py::class_<WebRTCVAD>(m, "VAD")
+        .def(py::init<>(), "Create and initialize a new VAD instance")
+        .def("set_mode", &WebRTCVAD::set_mode,
+             py::arg("mode"),
+             "Set VAD aggressiveness mode (0=least aggressive, 3=most aggressive)")
+        .def("is_speech", &WebRTCVAD::is_speech,
+             py::arg("audio_frame"), py::arg("sample_rate") = 16000,
+             "Check if audio frame contains speech (returns 1=speech, 0=silence, -1=error)")
+        .def_static("is_valid_config", &WebRTCVAD::is_valid_config,
+             py::arg("sample_rate"), py::arg("frame_length"),
+             "Check if sample rate and frame length combination is valid");
 }

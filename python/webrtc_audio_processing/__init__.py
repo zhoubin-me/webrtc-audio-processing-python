@@ -65,6 +65,7 @@ __all__ = [
     "GainController2",
     "Error",
     "GetFrameSize",
+    "VAD",
     "DEFAULT_SAMPLE_RATE",
     "DEFAULT_CHANNELS", 
     "DEFAULT_BLOCK_MS",

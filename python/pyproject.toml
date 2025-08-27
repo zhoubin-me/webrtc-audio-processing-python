@@ -36,6 +36,7 @@ dependencies = [
     "pyaudio>=0.2.14",
     "pybind11>=3.0.1",
     "setuptools>=75.3.2",
+    "sounddevice>=0.5.2",
 ]
 
 [project.optional-dependencies]

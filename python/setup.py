@@ -35,6 +35,7 @@ ext_modules = [
             # Path to webrtc headers
             "../install/include",  # Installed headers
             "../install/include/webrtc-audio-processing-2",
+            "../webrtc",  # Source tree for VAD headers
         ],
         libraries=["webrtc-audio-processing-2"],  # Link against the installed library
         library_dirs=[
