@@ -27,6 +27,11 @@ ninja -C build install
 export PKG_CONFIG_PATH=$PWD/install/lib/pkgconfig:$PKG_CONFIG_PATH
 ```
 
+If meson or ninja is missing:
+```bash
+sudo apt install -y meson ninja-build
+```
+
 ### Install Python Package
 
 ```bash
