@@ -40,6 +40,9 @@ ext_modules = [
         library_dirs=[
             "/usr/local/lib",  # Common install location
             "../install/lib",  # Local install directory from meson build
+            "../install/lib/x86_64-linux-gnu",  # Linux x86_64 architecture-specific
+            "../install/lib/aarch64-linux-gnu",  # Linux ARM64 architecture-specific
+            "../install/lib64",  # Alternative lib64 directory
         ],
         language='c++',
         define_macros=[
@@ -90,6 +93,12 @@ class BuildExt(_build_ext):
             os.path.abspath("../install/lib"),
             "../install/lib",
             "install/lib",
+            "../install/lib/x86_64-linux-gnu",  # Linux x86_64 architecture-specific
+            "../install/lib/aarch64-linux-gnu",  # Linux ARM64 architecture-specific  
+            "../install/lib64",  # Alternative lib64 directory
+            "install/lib/x86_64-linux-gnu",
+            "install/lib/aarch64-linux-gnu", 
+            "install/lib64",
         ]
         
         library_names = [
