@@ -76,6 +76,16 @@ class BuildExt(_build_ext):
             if sys.platform == 'darwin':
                 opts.append('-stdlib=libc++')
                 link_opts.append('-stdlib=libc++')
+            else:  # Linux
+                # Add rpath to avoid needing LD_LIBRARY_PATH
+                link_opts.extend([
+                    '-Wl,-rpath,$ORIGIN/../install/lib',
+                    '-Wl,-rpath,$ORIGIN/../install/lib/x86_64-linux-gnu', 
+                    '-Wl,-rpath,$ORIGIN/../install/lib/aarch64-linux-gnu',
+                    f'-Wl,-rpath,{os.path.abspath("../install/lib")}',
+                    f'-Wl,-rpath,{os.path.abspath("../install/lib/x86_64-linux-gnu")}',
+                    f'-Wl,-rpath,{os.path.abspath("../install/lib/aarch64-linux-gnu")}',
+                ])
         elif ct == 'msvc':
             opts.append('/std:c++17')
         
