@@ -9,9 +9,5 @@ dependencies = [
     "pybind11>=3.0.1",
     "setuptools>=80.9.0",
     "sounddevice>=0.5.3",
-    "webrtc-audio-processing",
     "wheel>=0.45.1",
 ]
-
-[tool.uv.sources]
-webrtc-audio-processing = { path = "dist/webrtc_audio_processing-2.1.0-cp312-cp312-macosx_11_0_arm64.whl" }

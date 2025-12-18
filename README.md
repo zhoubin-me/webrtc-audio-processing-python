@@ -35,6 +35,14 @@ Third, build your wheel file:
 ```
 
 Last, install the `.whl` file under `dist/`.
+```bash
+uv add dist/???.whl
+```
+
+Then run examples under `python/examples`, e.g.:
+```bash
+uv run realtime_echo_cancellation.py
+```
 
 
 ## Quick Start
