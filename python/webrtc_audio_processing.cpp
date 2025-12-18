@@ -1,8 +1,19 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+
+#include <cmath>
+#include <cstring>
+#include <memory>
+#include <stdexcept>
+#include <vector>
+
 #include <api/audio/audio_processing.h>
 #include <api/scoped_refptr.h>
+#include <common_audio/resampler/include/resampler.h>
+#include <modules/audio_processing/rms_level.h>
+#include <modules/audio_processing/vad/standalone_vad.h>
+#include <modules/audio_processing/vad/voice_activity_detector.h>
 
 // Include VAD header directly from source tree
 extern "C" {
@@ -48,6 +59,106 @@ public:
     static bool is_valid_config(int sample_rate, size_t frame_length) {
         return WebRtcVad_ValidRateAndFrameLength(sample_rate, frame_length) == 0;
     }
+};
+
+class StandaloneVadWrapper {
+public:
+    StandaloneVadWrapper() : vad_(webrtc::StandaloneVad::Create()) {
+        if (!vad_) {
+            throw std::runtime_error("Failed to create StandaloneVad instance");
+        }
+    }
+
+    int set_mode(int mode) { return vad_->set_mode(mode); }
+    int mode() const { return vad_->mode(); }
+
+    int add_audio(py::array_t<int16_t> audio_frame) {
+        auto buf = audio_frame.request();
+        if (buf.ndim != 1) {
+            throw std::runtime_error("Input array must be 1-dimensional");
+        }
+        return vad_->AddAudio(static_cast<const int16_t*>(buf.ptr), buf.shape[0]);
+    }
+
+    std::vector<double> get_activity(size_t length) {
+        std::vector<double> probabilities(length, 0.0);
+        if (vad_->GetActivity(probabilities.data(), length) != 0) {
+            throw std::runtime_error("StandaloneVad GetActivity failed");
+        }
+        return probabilities;
+    }
+
+private:
+    std::unique_ptr<webrtc::StandaloneVad> vad_;
+};
+
+class ResamplerWrapper {
+public:
+    ResamplerWrapper(int input_rate_hz, int output_rate_hz, size_t num_channels)
+        : input_rate_hz_(input_rate_hz),
+          output_rate_hz_(output_rate_hz),
+          num_channels_(num_channels) {
+        if (resampler_.Reset(input_rate_hz_, output_rate_hz_, num_channels_) != 0) {
+            throw std::runtime_error("Failed to initialize resampler");
+        }
+    }
+
+    int reset(int input_rate_hz, int output_rate_hz, size_t num_channels) {
+        input_rate_hz_ = input_rate_hz;
+        output_rate_hz_ = output_rate_hz;
+        num_channels_ = num_channels;
+        return resampler_.Reset(input_rate_hz_, output_rate_hz_, num_channels_);
+    }
+
+    int reset_if_needed(int input_rate_hz, int output_rate_hz, size_t num_channels) {
+        input_rate_hz_ = input_rate_hz;
+        output_rate_hz_ = output_rate_hz;
+        num_channels_ = num_channels;
+        return resampler_.ResetIfNeeded(input_rate_hz_, output_rate_hz_, num_channels_);
+    }
+
+    py::array_t<int16_t> process(py::array_t<int16_t> input) {
+        auto buf = input.request();
+        if (buf.ndim != 1) {
+            throw std::runtime_error("Input array must be 1-dimensional");
+        }
+
+        const size_t length = buf.shape[0];
+        if (num_channels_ == 0 || length % num_channels_ != 0) {
+            throw std::runtime_error("Input length must be a multiple of num_channels");
+        }
+
+        const size_t frames = length / num_channels_;
+        const double ratio = static_cast<double>(output_rate_hz_) / input_rate_hz_;
+        const size_t max_frames =
+            static_cast<size_t>(std::ceil(frames * ratio)) + 16;
+        const size_t max_len = max_frames * num_channels_;
+
+        std::vector<int16_t> output(max_len);
+        size_t out_len = 0;
+        if (resampler_.Push(static_cast<const int16_t*>(buf.ptr),
+                            length,
+                            output.data(),
+                            max_len,
+                            out_len) != 0) {
+            throw std::runtime_error("Resampler Push failed");
+        }
+
+        py::array_t<int16_t> result(out_len);
+        auto out_buf = result.request();
+        std::memcpy(out_buf.ptr, output.data(), out_len * sizeof(int16_t));
+        return result;
+    }
+
+    int input_rate_hz() const { return input_rate_hz_; }
+    int output_rate_hz() const { return output_rate_hz_; }
+    size_t num_channels() const { return num_channels_; }
+
+private:
+    webrtc::Resampler resampler_;
+    int input_rate_hz_;
+    int output_rate_hz_;
+    size_t num_channels_;
 };
 
 PYBIND11_MODULE(webrtc_audio_processing, m) {
@@ -212,4 +323,107 @@ PYBIND11_MODULE(webrtc_audio_processing, m) {
         .def_static("is_valid_config", &WebRTCVAD::is_valid_config,
              py::arg("sample_rate"), py::arg("frame_length"),
              "Check if sample rate and frame length combination is valid");
+
+    // StandaloneVad from modules/audio_processing/vad
+    py::class_<StandaloneVadWrapper>(m, "StandaloneVad")
+        .def(py::init<>(), "Create and initialize a StandaloneVad instance")
+        .def("set_mode", &StandaloneVadWrapper::set_mode,
+             py::arg("mode"),
+             "Set VAD aggressiveness mode (0=least aggressive, 3=most aggressive)")
+        .def("mode", &StandaloneVadWrapper::mode,
+             "Get current VAD aggressiveness mode")
+        .def("add_audio", &StandaloneVadWrapper::add_audio,
+             py::arg("audio_frame"),
+             "Add 10 ms of 16 kHz audio to the VAD buffer")
+        .def("get_activity", &StandaloneVadWrapper::get_activity,
+             py::arg("length") = 1,
+             "Get activity probabilities from the VAD");
+
+    py::class_<webrtc::VoiceActivityDetector>(m, "VoiceActivityDetector")
+        .def(py::init<>())
+        .def("process_chunk",
+             [](webrtc::VoiceActivityDetector& self,
+                py::array_t<int16_t> audio,
+                int sample_rate_hz) {
+                 auto buf = audio.request();
+                 if (buf.ndim != 1) {
+                     throw std::runtime_error("Input array must be 1-dimensional");
+                 }
+                 self.ProcessChunk(static_cast<const int16_t*>(buf.ptr),
+                                   buf.shape[0],
+                                   sample_rate_hz);
+             },
+             py::arg("audio"),
+             py::arg("sample_rate_hz"),
+             "Process a chunk of audio and update VAD state")
+        .def("chunkwise_voice_probabilities",
+             [](const webrtc::VoiceActivityDetector& self) {
+                 return self.chunkwise_voice_probabilities();
+             })
+        .def("chunkwise_rms",
+             [](const webrtc::VoiceActivityDetector& self) {
+                 return self.chunkwise_rms();
+             })
+        .def("last_voice_probability",
+             &webrtc::VoiceActivityDetector::last_voice_probability);
+
+    // RMS level computation
+    py::class_<webrtc::RmsLevel>(m, "RmsLevel")
+        .def(py::init<>())
+        .def("Reset", &webrtc::RmsLevel::Reset)
+        .def("Analyze",
+             [](webrtc::RmsLevel& self, py::array_t<int16_t> data) {
+                 auto buf = data.request();
+                 if (buf.ndim != 1) {
+                     throw std::runtime_error("Input array must be 1-dimensional");
+                 }
+                 rtc::ArrayView<const int16_t> view(
+                     static_cast<const int16_t*>(buf.ptr), buf.shape[0]);
+                 self.Analyze(view);
+             })
+        .def("Analyze",
+             [](webrtc::RmsLevel& self, py::array_t<float> data) {
+                 auto buf = data.request();
+                 if (buf.ndim != 1) {
+                     throw std::runtime_error("Input array must be 1-dimensional");
+                 }
+                 rtc::ArrayView<const float> view(
+                     static_cast<const float*>(buf.ptr), buf.shape[0]);
+                 self.Analyze(view);
+             })
+        .def("AnalyzeMuted", &webrtc::RmsLevel::AnalyzeMuted,
+             py::arg("length"))
+        .def("Average", &webrtc::RmsLevel::Average)
+        .def("AverageAndPeak",
+             [](webrtc::RmsLevel& self) {
+                 auto levels = self.AverageAndPeak();
+                 return py::make_tuple(levels.average, levels.peak);
+             })
+        .def_property_readonly_static(
+            "kMinLevelDb",
+            [](py::object) { return webrtc::RmsLevel::kMinLevelDb; })
+        .def_property_readonly_static(
+            "kInaudibleButNotMuted",
+            [](py::object) { return webrtc::RmsLevel::kInaudibleButNotMuted; });
+
+    // Resampler wrapper
+    py::class_<ResamplerWrapper>(m, "Resampler")
+        .def(py::init<int, int, size_t>(),
+             py::arg("input_rate_hz"),
+             py::arg("output_rate_hz"),
+             py::arg("num_channels"))
+        .def("reset", &ResamplerWrapper::reset,
+             py::arg("input_rate_hz"),
+             py::arg("output_rate_hz"),
+             py::arg("num_channels"))
+        .def("reset_if_needed", &ResamplerWrapper::reset_if_needed,
+             py::arg("input_rate_hz"),
+             py::arg("output_rate_hz"),
+             py::arg("num_channels"))
+        .def("process", &ResamplerWrapper::process,
+             py::arg("input"),
+             "Resample int16 audio and return a new array")
+        .def("input_rate_hz", &ResamplerWrapper::input_rate_hz)
+        .def("output_rate_hz", &ResamplerWrapper::output_rate_hz)
+        .def("num_channels", &ResamplerWrapper::num_channels);
 }

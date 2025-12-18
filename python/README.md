@@ -91,6 +91,51 @@ See the `examples/` directory for complete working examples:
 - `offline_processing.py` - Process audio files offline (equivalent to C++ run-offline example)
 - `realtime_processing.py` - Real-time audio processing with microphone/speakers
 
+## Additional APIs
+
+### Standalone VAD (modules/audio_processing/vad)
+
+```python
+import webrtc_audio_processing as webrtc_apm
+import numpy as np
+
+vad = webrtc_apm.StandaloneVad()
+vad.set_mode(2)  # 0..3
+
+# 10 ms @ 16 kHz = 160 samples
+frame = np.zeros(160, dtype=np.int16)
+vad.add_audio(frame)
+probs = vad.get_activity(1)
+```
+
+### Voice Activity Detector (combined VAD + RMS)
+
+```python
+vad = webrtc_apm.VoiceActivityDetector()
+audio = np.zeros(320, dtype=np.int16)  # 10 ms @ 32 kHz
+vad.process_chunk(audio, 32000)
+probs = vad.chunkwise_voice_probabilities()
+rms = vad.chunkwise_rms()
+last = vad.last_voice_probability()
+```
+
+### RMS Level
+
+```python
+rms = webrtc_apm.RmsLevel()
+rms.Analyze(np.zeros(160, dtype=np.int16))
+avg = rms.Average()
+avg, peak = rms.AverageAndPeak()
+```
+
+### Resampler
+
+```python
+resampler = webrtc_apm.Resampler(48000, 16000, 1)
+input_audio = np.zeros(480, dtype=np.int16)  # 10 ms @ 48 kHz
+output_audio = resampler.process(input_audio)
+```
+
 ## API Reference
 
 ### AudioProcessing
