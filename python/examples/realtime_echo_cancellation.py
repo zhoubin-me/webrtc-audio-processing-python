@@ -7,7 +7,7 @@ and speaker output, applying echo cancellation and other audio processing
 features from the WebRTC Audio Processing library.
 
 Requirements:
-    pip install pyaudio numpy webrtc-audio-processing
+    pip install sounddevice numpy webrtc-audio-processing
 
 Usage:
     python realtime_echo_cancellation.py
@@ -25,22 +25,10 @@ import numpy as np
 import threading
 import queue
 import time
-from collections import deque
 
-try:
-    import pyaudio
-except ImportError:
-    print("Error: pyaudio not found. Install with: pip install pyaudio")
-    sys.exit(1)
 
-try:
-    import webrtc_audio_processing as webrtc_apm
-except ImportError:
-    print("Error: webrtc_audio_processing module not found.")
-    print("Please build and install the Python bindings first:")
-    print("  cd python")
-    print("  pip install .")
-    sys.exit(1)
+import sounddevice as sd
+import webrtc_audio_processing as webrtc_apm
 
 
 # Audio configuration
@@ -56,7 +44,6 @@ BUFFER_SIZE = 10  # Number of frames to buffer
 
 class RealTimeEchoCanceller:
     def __init__(self):
-        self.audio = pyaudio.PyAudio()
         self.apm = None
         self.stream_config = None
 
@@ -66,8 +53,7 @@ class RealTimeEchoCanceller:
         self.output_queue = queue.Queue(maxsize=BUFFER_SIZE)
 
         # Streams
-        self.input_stream = None
-        self.output_stream = None
+        self.stream = None
 
         # Control flags
         self.running = False
@@ -111,27 +97,22 @@ class RealTimeEchoCanceller:
 
         print("WebRTC Audio Processor configured successfully")
 
-    def audio_input_callback(self, in_data, frame_count, time_info, status):
-        """Callback for microphone input."""
+    def audio_callback(self, in_data, out_data, frame_count, time_info, status):
+        """Full-duplex callback for microphone input and speaker output."""
         if status:
-            print(f"Input callback status: {status}")
+            print(f"Audio callback status: {status}")
 
-        # Convert bytes to numpy array
-        audio_data = np.frombuffer(in_data, dtype=np.int16)
+        if in_data is None or len(in_data) == 0:
+            mic_frame = np.zeros(frame_count, dtype=np.int16)
+        else:
+            mic_frame = np.ascontiguousarray(in_data[:, 0], dtype=np.int16)
 
         try:
             # Add to microphone queue (non-blocking)
-            self.mic_queue.put_nowait(audio_data.copy())
+            self.mic_queue.put_nowait(mic_frame.copy())
         except queue.Full:
             # Drop frame if queue is full
             pass
-
-        return (None, pyaudio.paContinue)
-
-    def audio_output_callback(self, in_data, frame_count, time_info, status):
-        """Callback for speaker output."""
-        if status:
-            print(f"Output callback status: {status}")
 
         try:
             # Get processed audio from output queue
@@ -140,11 +121,15 @@ class RealTimeEchoCanceller:
             # Also add to speaker queue for echo cancellation reference
             self.speaker_queue.put_nowait(audio_data.copy())
 
-            return (audio_data.tobytes(), pyaudio.paContinue)
+            if len(audio_data) != frame_count:
+                if len(audio_data) < frame_count:
+                    audio_data = np.pad(audio_data, (0, frame_count - len(audio_data)))
+                else:
+                    audio_data = audio_data[:frame_count]
+            out_data[:] = audio_data.reshape(-1, 1)
         except queue.Empty:
             # Return silence if no processed audio available
-            silence = np.zeros(frame_count, dtype=np.int16)
-            return (silence.tobytes(), pyaudio.paContinue)
+            out_data[:] = 0
 
     def process_audio(self):
         """Audio processing thread - applies WebRTC processing."""
@@ -226,29 +211,15 @@ class RealTimeEchoCanceller:
         print(f"Opening audio streams (sample rate: {SAMPLE_RATE}Hz, frame size: {FRAME_SIZE})")
 
         try:
-            # Input stream (microphone)
-            self.input_stream = self.audio.open(
-                format=pyaudio.paInt16,
+            # Full-duplex stream (microphone + speakers)
+            self.stream = sd.Stream(
+                samplerate=SAMPLE_RATE,
                 channels=CHANNELS,
-                rate=SAMPLE_RATE,
-                input=True,
-                frames_per_buffer=CHUNK_SIZE,
-                stream_callback=self.audio_input_callback
+                dtype="int16",
+                blocksize=CHUNK_SIZE,
+                callback=self.audio_callback,
             )
-
-            # Output stream (speakers)
-            self.output_stream = self.audio.open(
-                format=pyaudio.paInt16,
-                channels=CHANNELS,
-                rate=SAMPLE_RATE,
-                output=True,
-                frames_per_buffer=CHUNK_SIZE,
-                stream_callback=self.audio_output_callback
-            )
-
-            # Start streams
-            self.input_stream.start_stream()
-            self.output_stream.start_stream()
+            self.stream.start()
 
             # Start processing thread
             self.running = True
@@ -279,17 +250,10 @@ class RealTimeEchoCanceller:
         if self.processing_thread and self.processing_thread.is_alive():
             self.processing_thread.join(timeout=2.0)
 
-        # Stop and close streams
-        if self.input_stream:
-            self.input_stream.stop_stream()
-            self.input_stream.close()
-
-        if self.output_stream:
-            self.output_stream.stop_stream()
-            self.output_stream.close()
-
-        # Close PyAudio
-        self.audio.terminate()
+        # Stop and close stream
+        if self.stream:
+            self.stream.stop()
+            self.stream.close()
 
         print("Stopped successfully")
 
@@ -303,20 +267,15 @@ class RealTimeEchoCanceller:
 
 def list_audio_devices():
     """List available audio input and output devices."""
-    audio = pyaudio.PyAudio()
-
     print("Available audio devices:")
     print("=" * 50)
 
-    for i in range(audio.get_device_count()):
-        info = audio.get_device_info_by_index(i)
+    for i, info in enumerate(sd.query_devices()):
         print(f"Device {i}: {info['name']}")
-        print(f"  Channels: {info['maxInputChannels']} in, {info['maxOutputChannels']} out")
-        print(f"  Sample Rate: {info['defaultSampleRate']}")
-        print(f"  Host API: {audio.get_host_api_info_by_index(info['hostApi'])['name']}")
+        print(f"  Channels: {info['max_input_channels']} in, {info['max_output_channels']} out")
+        print(f"  Sample Rate: {info['default_samplerate']}")
+        print(f"  Host API: {sd.query_hostapis(info['hostapi'])['name']}")
         print()
-
-    audio.terminate()
 
 
 def main():

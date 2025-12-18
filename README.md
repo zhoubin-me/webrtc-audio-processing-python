@@ -87,10 +87,14 @@ apm.ProcessStream(capture_frame, stream_config, stream_config, capture_frame)
 
 ## Examples
 
-See the `examples/` directory for complete working examples:
+See the `python/examples/` directory for complete working examples:
 
+- `generate_test_audio.py` - Generate raw 16-bit PCM test files for the offline example
 - `offline_processing.py` - Process audio files offline (equivalent to C++ run-offline example)
-- `realtime_processing.py` - Real-time audio processing with microphone/speakers
+- `realtime_echo_cancellation.py` - Full-duplex echo cancellation (requires `sounddevice`)
+- `realtime_resampler_sounddevice.py` - Resampler loopback demo (requires `sounddevice`)
+- `realtime_rms_sounddevice.py` - RMS level loopback demo (requires `sounddevice`)
+- `realtime_vad_sounddevice.py` - Voice activity detector loopback demo (requires `sounddevice`)
 
 ## API Reference
 

@@ -143,7 +143,7 @@ config = webrtc_apm.StreamConfig(sample_rate_hz, num_channels)
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.12+
 - NumPy
 - WebRTC Audio Processing C++ library (built separately)
 
