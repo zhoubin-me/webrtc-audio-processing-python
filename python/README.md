@@ -5,36 +5,11 @@ Python bindings for the [WebRTC Audio Processing](https://gitlab.freedesktop.org
 ## Features
 
 - **Echo Cancellation**: Removes acoustic echo from audio streams
-- **Noise Suppression**: Reduces background noise in captured audio  
+- **Noise Suppression**: Reduces background noise in captured audio
 - **Automatic Gain Control (AGC)**: Maintains consistent audio levels
 - **High-pass Filtering**: Removes low-frequency noise
 - **Voice Activity Detection**: Detects speech presence
 
-## Installation
-
-### Prerequisites
-
-First, you need to build and install the WebRTC Audio Processing C++ library:
-
-```bash
-# Build the C++ library
-meson . build -Dprefix=$PWD/install
-ninja -C build
-ninja -C build install
-
-# Add to pkg-config path (if needed)
-export PKG_CONFIG_PATH=$PWD/install/lib/pkgconfig:$PKG_CONFIG_PATH
-```
-
-### Install Python Package
-
-```bash
-# Install from source
-pip install .
-
-# Or for development
-pip install -e .
-```
 
 ## Quick Start
 
@@ -78,7 +53,7 @@ capture_frame = np.array([...], dtype=np.int16)  # Your capture audio data
 # Process reverse stream (render/playback audio)
 apm.ProcessReverseStream(render_frame, stream_config, stream_config, render_frame)
 
-# Process forward stream (capture/microphone audio) 
+# Process forward stream (capture/microphone audio)
 apm.ProcessStream(capture_frame, stream_config, stream_config, capture_frame)
 
 # The capture_frame now contains the processed audio
@@ -153,7 +128,7 @@ Main audio processing class:
 Configuration structure with the following components:
 
 - `echo_canceller` - Echo cancellation settings
-- `noise_suppression` - Noise suppression settings  
+- `noise_suppression` - Noise suppression settings
 - `gain_controller1` - AGC1 settings
 - `gain_controller2` - AGC2 settings
 - `high_pass_filter` - High-pass filter settings
